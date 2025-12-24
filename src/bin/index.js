@@ -10,6 +10,31 @@ const ignorePatterns = [/Excalidraw/, /\.obsidian/, /DS_Store/];
 
 let watchFlag;
 const args = process.argv.slice(2);
+const showHelp = args.length === 0 || args.includes("-h") || args.includes("--help");
+
+const printHelp = () => {
+  console.log(`mddb - MarkdownDB CLI
+
+Usage:
+  mddb <content-path> [config-path] [--watch]
+  mddb <markdown-file>
+  mddb --help
+
+Examples:
+  mddb ./content
+  mddb ./content ./markdowndb.config.js --watch
+  mddb ./notes/todo.md
+
+Options:
+  --watch     Watch for changes and keep the process running
+  -h, --help  Show this help message
+`);
+};
+
+if (showHelp) {
+  printHelp();
+  process.exit(0);
+}
 
 // Check for the watch flag and its position
 const watchIndex = args.indexOf("--watch");
