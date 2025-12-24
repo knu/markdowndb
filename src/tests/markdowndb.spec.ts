@@ -3,6 +3,9 @@ import { MarkdownDB } from "../lib/markdowndb";
 import { recursiveWalkDir } from "../lib/recursiveWalkDir";
 import { File, MddbFile, Table } from "../lib/schema";
 import path from "path";
+import fs from "fs";
+import os from "os";
+import { randomBytes } from "crypto";
 
 /**
  * @jest-environment node
@@ -12,12 +15,17 @@ import path from "path";
 describe("MarkdownDB - default config", () => {
   const pathToContentFixture = "__mocks__/content";
   let mddb: MarkdownDB;
+  let dbFile: string;
 
   beforeAll(async () => {
+    dbFile = path.join(
+      os.tmpdir(),
+      `markdowndb-${randomBytes(8).toString("hex")}.sqlite`
+    );
     const dbConfig = {
       client: "sqlite3",
       connection: {
-        filename: "markdown.db",
+        filename: dbFile,
       },
     };
 
@@ -28,6 +36,7 @@ describe("MarkdownDB - default config", () => {
 
   afterAll(async () => {
     await mddb.db.destroy();
+    fs.rmSync(dbFile, { force: true });
   });
 
   describe("correct startup and indexing", () => {
@@ -297,12 +306,17 @@ describe("MarkdownDB - default config", () => {
 describe("MarkdownDB - custom config", () => {
   const pathToContentFixture = "__mocks__/content";
   let mddb: MarkdownDB;
+  let dbFile: string;
 
   beforeAll(async () => {
+    dbFile = path.join(
+      os.tmpdir(),
+      `markdowndb-${randomBytes(8).toString("hex")}.sqlite`
+    );
     const dbConfig = {
       client: "sqlite3",
       connection: {
-        filename: "markdown.db",
+        filename: dbFile,
       },
     };
 
@@ -323,6 +337,7 @@ describe("MarkdownDB - custom config", () => {
     // TODO why we have to call this twice?
     mddb.db.destroy();
     mddb._destroyDb();
+    fs.rmSync(dbFile, { force: true });
   });
 
   describe("correct startup and indexing", () => {

@@ -51,7 +51,9 @@ export function indexFolder(
             } for the ${documentType} schema. \n    In "${err.path.join(
               ","
             )}" field: ${err.message}`;
-          console.error(errorMessage);
+          if (process.env.NODE_ENV !== "test") {
+            console.error(errorMessage);
+          }
         });
         
         throw new Error(

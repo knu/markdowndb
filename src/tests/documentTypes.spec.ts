@@ -2,16 +2,25 @@ import { FileInfo } from "../lib/process";
 import { Root } from "mdast";
 import { MarkdownDB } from "../lib/markdowndb";
 import { z } from "zod";
+import fs from "fs";
+import os from "os";
+import path from "path";
+import { randomBytes } from "crypto";
 
 describe("Document Types Schema Validate Testing", () => {
   const pathToContentFixture = "__mocks__/content";
   let mddb: MarkdownDB;
+  let dbFile: string;
 
   beforeAll(async () => {
+    dbFile = path.join(
+      os.tmpdir(),
+      `markdowndb-${randomBytes(8).toString("hex")}.sqlite`
+    );
     const dbConfig = {
       client: "sqlite3",
       connection: {
-        filename: "markdown.db",
+        filename: dbFile,
       },
     };
     mddb = new MarkdownDB(dbConfig);
@@ -20,6 +29,7 @@ describe("Document Types Schema Validate Testing", () => {
 
   afterAll(async () => {
     await mddb.db.destroy();
+    fs.rmSync(dbFile, { force: true });
   });
   
   test("Should check if the title field is created and save in db", async () => {
