@@ -1,5 +1,6 @@
 import { execFileSync, spawnSync } from "child_process";
 import fs from "fs";
+import os from "os";
 import path from "path";
 
 const cliPath = path.join(process.cwd(), "dist", "src", "bin", "index.js");
@@ -18,7 +19,8 @@ describe("mddb CLI", () => {
   });
 
   test("warns when file extension is not markdown", () => {
-    const tmpFile = path.join("__mocks__", "content", "not-markdown.txt");
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "mddb-cli-"));
+    const tmpFile = path.join(tmpDir, "not-markdown.txt");
     fs.writeFileSync(tmpFile, "# title");
 
     try {
@@ -34,7 +36,7 @@ describe("mddb CLI", () => {
       const parsed = JSON.parse(result.stdout || "");
       expect(parsed.file_path).toBe(path.resolve(tmpFile));
     } finally {
-      fs.rmSync(tmpFile, { force: true });
+      fs.rmSync(tmpDir, { recursive: true, force: true });
     }
   });
 });

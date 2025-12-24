@@ -42,33 +42,18 @@ const decodeBytes = (bytes: Uint8Array) => {
   return Buffer.from(bytes).toString("utf8");
 };
 
-const readNodeStream = async (stream: NodeJS.ReadableStream) => {
-  const chunks: Buffer[] = [];
-  for await (const chunk of stream as AsyncIterable<Buffer | string>) {
-    if (typeof chunk === "string") {
-      chunks.push(Buffer.from(chunk, "utf8"));
-    } else {
-      chunks.push(Buffer.from(chunk));
-    }
+const encodeString = (value: string) => {
+  if (typeof TextEncoder !== "undefined") {
+    return new TextEncoder().encode(value);
   }
 
-  return Buffer.concat(chunks).toString("utf8");
+  return Uint8Array.from(Buffer.from(value, "utf8"));
 };
 
-const readWebStream = async (stream: ReadableStream<Uint8Array>) => {
-  const reader = stream.getReader();
-  const chunks: Uint8Array[] = [];
+const concatUint8Arrays = (chunks: Uint8Array[]) => {
   let totalLength = 0;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
-    }
-    if (value) {
-      chunks.push(value);
-      totalLength += value.length;
-    }
+  for (const chunk of chunks) {
+    totalLength += chunk.length;
   }
 
   const combined = new Uint8Array(totalLength);
@@ -78,7 +63,37 @@ const readWebStream = async (stream: ReadableStream<Uint8Array>) => {
     offset += chunk.length;
   }
 
-  return decodeBytes(combined);
+  return combined;
+};
+
+const readNodeStream = async (stream: NodeJS.ReadableStream) => {
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of stream as AsyncIterable<Uint8Array | string>) {
+    if (typeof chunk === "string") {
+      chunks.push(encodeString(chunk));
+    } else {
+      chunks.push(chunk);
+    }
+  }
+
+  return decodeBytes(concatUint8Arrays(chunks));
+};
+
+const readWebStream = async (stream: ReadableStream<Uint8Array>) => {
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    if (value) {
+      chunks.push(value);
+    }
+  }
+
+  return decodeBytes(concatUint8Arrays(chunks));
 };
 
 const readMarkdownInput = async (input: MarkdownInput) => {
